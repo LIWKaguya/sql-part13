@@ -2,6 +2,7 @@ require('dotenv').config()
 const { Sequelize, Model, DataTypes } = require('sequelize')
 const express = require('express');
 const app = express();
+app.use(express.json())
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialectOptions: {
@@ -48,13 +49,10 @@ app.get('/api/blogs', async (_, res) => {
 })
 
 app.post('/api/blogs', async (req, res) => {
-  try {
     const {title, author, url, likes} = req.body
-    const blog = await Blog.create({title, author, url, likes})
+    console.log(req.body);
+    const blog = await Blog.create({author, url, title, likes})
     return res.json(blog)
-  } catch (error) {
-    res.status(400).json({ error })
-  }
 })
 
 app.delete('/api/blogs/:id', async (req, res) => {
