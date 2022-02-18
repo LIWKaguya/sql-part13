@@ -44,7 +44,30 @@ Blog.sync();
 
 app.get('/api/blogs', async (_, res) => {
   const blogs = await Blog.findAll();
-  res.json(blogs)
+  return res.json(blogs)
+})
+
+app.post('/api/blogs', async (req, res) => {
+  try {
+    const {title, author, url, likes} = req.body
+    const blog = await Blog.create({title, author, url, likes})
+    return res.json(blog)
+  } catch (error) {
+    res.status(400).json({ error })
+  }
+})
+
+app.delete('/api/blogs/:id', async (req, res) => {
+  try {
+    await Blog.destroy({
+      where: {
+        id: req.params.id
+      }
+    })
+    return res.json(204)
+  } catch (error) {
+    res.status(400).json({ error })
+  }
 })
 
 const PORT = process.env.PORT || 3001
