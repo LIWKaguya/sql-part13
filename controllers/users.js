@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const bcrypt = require('bcryptjs');
 
-const { User } = require('../models')
+const { User, Blog } = require('../models')
 
 const userFinder = async (req, _, next) => {
     req.user = await User.findOne({
@@ -13,7 +13,12 @@ const userFinder = async (req, _, next) => {
 }
 
 router.get('/', async (_, res) => {
-  const users = await User.findAll()
+  const users = await User.findAll({
+    include: {
+      model: Blog,
+      attributes: { exclude: ["UserId"] },
+    },
+  });
   res.json(users)
 })
 
@@ -26,6 +31,11 @@ router.post('/', async (req, res) => {
     const newUser = await User.create({username, name, passwordHash})
     return res.json(newUser)
 })
+
+router.get("/:id", async (req, res) => {
+  const user = await User.findByPk(req.params.id);
+  res.json(user);
+});
 
 router.put('/:username', userFinder, async (req, res) => {
   req.user.username = req.body.username
