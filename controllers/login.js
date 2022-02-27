@@ -2,14 +2,16 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 
 const router = require('express').Router()
-const { User } = require('../models')
+const { User, Session } = require('../models')
 const { SECRET } = require('../util/config')
+const { disabled } = require('express/lib/application')
 
 router.post('/', async (req, res) => {
     const {body} = req
     const user = await User.findOne({
         where: {
-            username: body.username
+            username: body.username,
+            disabled: false
         }
     })
 
@@ -27,6 +29,7 @@ router.post('/', async (req, res) => {
     }
 
     const token = jwt.sign(userForToken, SECRET)
+    await Session.create({ userId: user.id, token });
 
     res.status(200).send({token, username, name: user.name})
 })

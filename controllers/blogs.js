@@ -1,21 +1,31 @@
 const router = require('express').Router()
 const { Op } = require("sequelize");
 
-const { Blog, User } = require("../models");
+const { Blog, User, Session } = require("../models");
 const { SECRET } = require("../util/config");
 
 const tokenExtractor = async (req, res, next) => {
-  const authorization = req.get("authorization");
-  if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
-    try {
-      req.decodedToken = jwt.verify(authorization.substring(7), SECRET);
-    } catch {
-      res.status(401).json({ error: "token invalid" });
-    }
-  } else {
-    res.status(401).json({ error: "token missing" });
+  const authorization = req.get('authorization');
+  req.token = null;
+
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    const token = authorization.substring(7);
+    const session = await Session.findOne({
+      where: { token },
+    });
+
+    if (session) {
+      req.token = token;
+      req.decodedToken = jwt.verify(req.token, SECRET);
+    } else return res.status(401).json({ error: 'token expired' });
   }
+
+  if (!authorization || !req.decodedToken.id) {
+    return res.status(401).json({ error: 'missing token' });
+  }
+
   req.user = await User.findByPk(req.decodedToken.id);
+
   next();
 };
 
